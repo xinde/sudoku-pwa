@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f5efe2" />
+    <meta name="description" content="支持 4、6、9 阶和三档难度的离线数独 PWA。" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="数独·一方" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>数独·一方</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#game-board">跳到棋盘</a>
+    <div class="app-shell">
+      <header class="masthead">
+        <div class="brand-block">
+          <span class="brand-seal" aria-hidden="true">数</span>
+          <div>
+            <h1>数独<span aria-hidden="true">·</span>一方</h1>
+            <p>静心落子，方寸之间自有秩序</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="sound-toggle" class="icon-button" type="button" aria-label="关闭声音" aria-pressed="true">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 9v6h4l5 4V5L9 9H5Zm12.2-.8a5.4 5.4 0 0 1 0 7.6M19.8 5.6a9 9 0 0 1 0 12.8" /></svg>
+          </button>
+          <button id="install-button" class="quiet-button" type="button" hidden>安装应用</button>
+        </div>
+      </header>
+
+      <main class="game-layout">
+        <section class="board-column" aria-label="数独棋盘区">
+          <div class="game-status" aria-label="游戏状态">
+            <div><span class="status-label">用时</span><strong id="timer">00:00</strong></div>
+            <span class="status-divider" aria-hidden="true"></span>
+            <div><span class="status-label">错误</span><strong id="mistakes">0</strong></div>
+            <span class="status-divider" aria-hidden="true"></span>
+            <div><span class="status-label">剩余</span><strong id="remaining">0</strong></div>
+          </div>
+
+          <div id="game-board" class="sudoku-board" role="grid" aria-label="数独棋盘" tabindex="-1"></div>
+          <p id="game-message" class="game-message" role="status" aria-live="polite">选择一个空格开始</p>
+
+          <div id="number-pad" class="number-pad" aria-label="数字键盘"></div>
+
+          <div class="tool-row" aria-label="游戏工具">
+            <button id="undo-button" class="tool-button" type="button">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6" /></svg>
+              <span>撤销</span>
+            </button>
+            <button id="erase-button" class="tool-button" type="button">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 19-5-5L13 4l8 8-7 7H8Zm3-12 7 7M8 19h13" /></svg>
+              <span>擦除</span>
+            </button>
+            <button id="notes-button" class="tool-button" type="button" aria-pressed="false">
+              <span class="tool-glyph" aria-hidden="true">候</span>
+              <span>候选</span>
+            </button>
+            <button id="hint-button" class="tool-button" type="button">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M8.5 14.5A7 7 0 1 1 15.5 14.5C14.6 15.2 14 16 14 17h-4c0-1-.6-1.8-1.5-2.5Z" /></svg>
+              <span>提示</span>
+            </button>
+          </div>
+        </section>
+
+        <aside class="control-panel" aria-label="游戏设置">
+          <div class="panel-heading">
+            <span class="eyebrow">本局设置</span>
+            <h2 id="round-title">九阶 · 进阶</h2>
+          </div>
+
+          <fieldset class="setting-group">
+            <legend>棋盘阶数</legend>
+            <div id="size-options" class="segmented-control">
+              <button type="button" data-size="4" aria-pressed="false">4 阶</button>
+              <button type="button" data-size="6" aria-pressed="false">6 阶</button>
+              <button type="button" data-size="9" aria-pressed="true">9 阶</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="setting-group">
+            <legend>挑战难度</legend>
+            <div id="difficulty-options" class="difficulty-list">
+              <button type="button" data-difficulty="easy" aria-pressed="false">
+                <span>简单</span><small>适合热身</small>
+              </button>
+              <button type="button" data-difficulty="medium" aria-pressed="true">
+                <span>进阶</span><small>需要推演</small>
+              </button>
+              <button type="button" data-difficulty="hard" aria-pressed="false">
+                <span>高级</span><small>留白更多</small>
+              </button>
+            </div>
+          </fieldset>
+
+          <button id="new-game-button" class="primary-button" type="button">
+            <span>另起一局</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5" /></svg>
+          </button>
+
+          <div class="keyboard-note">
+            <span aria-hidden="true">⌨</span>
+            <p>键盘可直接输入数字，方向键移动，<kbd>N</kbd> 切换候选。</p>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <div id="completion-banner" class="completion-banner" role="dialog" aria-modal="true" aria-labelledby="completion-title" hidden>
+      <div class="completion-sheet">
+        <span class="completion-mark" aria-hidden="true">成</span>
+        <p class="eyebrow">本局完成</p>
+        <h2 id="completion-title">方格皆有其位</h2>
+        <p id="completion-summary">你完成了这一局。</p>
+        <button id="completion-new-game" class="primary-button" type="button">再来一局</button>
+      </div>
+    </div>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

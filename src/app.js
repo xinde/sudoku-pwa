@@ -10,7 +10,9 @@ const elements = {
   mistakes: document.querySelector("#mistakes"),
   remaining: document.querySelector("#remaining"),
   message: document.querySelector("#game-message"),
+  dock: document.querySelector("#play-dock"),
   roundTitle: document.querySelector("#round-title"),
+  roundCaption: document.querySelector("#round-caption"),
   newGame: document.querySelector("#new-game-button"),
   undo: document.querySelector("#undo-button"),
   erase: document.querySelector("#erase-button"),
@@ -18,6 +20,11 @@ const elements = {
   hint: document.querySelector("#hint-button"),
   sound: document.querySelector("#sound-toggle"),
   install: document.querySelector("#install-button"),
+  settingsToggle: document.querySelector("#settings-toggle"),
+  settingsPanel: document.querySelector("#settings-panel"),
+  settingsBackdrop: document.querySelector("#settings-backdrop"),
+  settingsClose: document.querySelector("#settings-close"),
+  shell: document.querySelector(".app-shell"),
   completion: document.querySelector("#completion-banner"),
   completionSummary: document.querySelector("#completion-summary"),
   completionNewGame: document.querySelector("#completion-new-game"),
@@ -152,7 +159,10 @@ function renderControls() {
   elements.sound.setAttribute("aria-label", state.soundOn ? "关闭声音" : "开启声音");
   elements.sound.classList.toggle("is-muted", !state.soundOn);
   elements.undo.disabled = state.history.length === 0 || state.completed;
-  elements.roundTitle.textContent = `${toChineseSize(state.size)}阶 · ${DIFFICULTY_LABELS[state.difficulty]}`;
+  const roundLabel = `${toChineseSize(state.size)}阶 · ${DIFFICULTY_LABELS[state.difficulty]}`;
+  elements.roundTitle.textContent = roundLabel;
+  elements.roundCaption.textContent = roundLabel;
+  elements.dock.classList.toggle("is-note-mode", state.noteMode);
 }
 
 function toChineseSize(size) {
@@ -168,6 +178,7 @@ function renderBoard() {
 
   elements.board.style.setProperty("--size", state.size);
   elements.board.style.setProperty("--box-cols", boxCols);
+  elements.board.style.setProperty("--box-rows", boxRows);
   elements.board.dataset.size = state.size;
   elements.board.setAttribute("aria-rowcount", String(state.size));
   elements.board.setAttribute("aria-colcount", String(state.size));
@@ -445,6 +456,51 @@ function toggleNotes() {
   saveGame();
 }
 
+function isSettingsOpen() {
+  return elements.settingsPanel.classList.contains("is-open");
+}
+
+function openSettings() {
+  if (isSettingsOpen() || elements.completion.hidden === false) return;
+  elements.settingsBackdrop.hidden = false;
+  elements.settingsPanel.inert = false;
+  elements.settingsPanel.setAttribute("aria-hidden", "false");
+  elements.settingsToggle.setAttribute("aria-expanded", "true");
+  elements.settingsPanel.classList.add("is-open");
+  elements.shell.inert = true;
+  requestAnimationFrame(() => elements.settingsBackdrop.classList.add("is-visible"));
+  elements.settingsClose.focus({ preventScroll: true });
+}
+
+function closeSettings() {
+  if (!isSettingsOpen()) return;
+  elements.settingsPanel.classList.remove("is-open");
+  elements.settingsBackdrop.classList.remove("is-visible");
+  elements.settingsToggle.setAttribute("aria-expanded", "false");
+  elements.shell.inert = false;
+  elements.settingsToggle.focus({ preventScroll: true });
+  elements.settingsPanel.setAttribute("aria-hidden", "true");
+  elements.settingsPanel.inert = true;
+  window.setTimeout(() => {
+    if (!isSettingsOpen()) elements.settingsBackdrop.hidden = true;
+  }, 260);
+}
+
+function trapSettingsFocus(event) {
+  const focusable = [...elements.settingsPanel.querySelectorAll("button:not(:disabled), [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")]
+    .filter((element) => element.offsetParent !== null);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 function getAudioContext() {
   if (!audioContext) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -495,6 +551,7 @@ document.querySelector("#size-options").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-size]");
   if (!button) return;
   state.size = Number(button.dataset.size);
+  closeSettings();
   newGame();
 });
 
@@ -502,15 +559,22 @@ document.querySelector("#difficulty-options").addEventListener("click", (event) 
   const button = event.target.closest("button[data-difficulty]");
   if (!button) return;
   state.difficulty = button.dataset.difficulty;
+  closeSettings();
   newGame();
 });
 
-elements.newGame.addEventListener("click", newGame);
+elements.newGame.addEventListener("click", () => {
+  closeSettings();
+  newGame();
+});
 elements.completionNewGame.addEventListener("click", newGame);
 elements.undo.addEventListener("click", undo);
 elements.erase.addEventListener("click", eraseSelected);
 elements.notes.addEventListener("click", toggleNotes);
 elements.hint.addEventListener("click", giveHint);
+elements.settingsToggle.addEventListener("click", openSettings);
+elements.settingsClose.addEventListener("click", closeSettings);
+elements.settingsBackdrop.addEventListener("click", closeSettings);
 
 elements.sound.addEventListener("click", () => {
   state.soundOn = !state.soundOn;
@@ -520,6 +584,15 @@ elements.sound.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (isSettingsOpen()) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeSettings();
+    } else if (event.key === "Tab") {
+      trapSettingsFocus(event);
+    }
+    return;
+  }
   if (event.metaKey || event.ctrlKey || event.altKey || elements.completion.hidden === false) return;
   const numericValue = Number(event.key);
   if (numericValue >= 1 && numericValue <= state.size) {
@@ -536,6 +609,8 @@ document.addEventListener("keydown", (event) => {
     Delete: eraseSelected,
     n: toggleNotes,
     N: toggleNotes,
+    s: openSettings,
+    S: openSettings,
     h: giveHint,
     H: giveHint,
   };

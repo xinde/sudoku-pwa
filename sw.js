@@ -1,4 +1,4 @@
-const CACHE_NAME = "sudoku-yifang-v1";
+const CACHE_NAME = "sudoku-yifang-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
